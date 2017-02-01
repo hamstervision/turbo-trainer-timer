@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -10,6 +14,11 @@
 #include <QScrollBar>
 #include <QCloseEvent>
 #include <QSettings>
+#include <QTimer>
+
+#ifdef Q_OS_WIN
+#include <Windows.h>
+#endif
 
 static const QString AppRegKey = "TurboTrainerTimer";
 static const QString FileFilter = "Turbo Trainer Timer Set (*.tttset)";
@@ -23,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_showtimeWidget(nullptr)
     , m_fontAwesome(nullptr)
     , m_scrollPos(0)
+    , m_fullScreen(false)
 {
 
     m_fontAwesome = new QtAwesome(this);
@@ -40,15 +50,22 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(m_scrollArea);
     m_scrollArea->setWidget(m_stagingArea);
 
+    ui->actionNew->setIcon(m_fontAwesome->icon(fa::file));
+    ui->actionOpen->setIcon(m_fontAwesome->icon(fa::folderopen));
+    ui->actionSave->setIcon(m_fontAwesome->icon(fa::save));
+    ui->actionSaveAs->setIcon(m_fontAwesome->icon(fa::save));
+    ui->actionExit->setIcon(m_fontAwesome->icon(fa::close));
+
     ui->actionAddStep->setIcon(m_fontAwesome->icon(fa::plus));
     ui->actionPlay->setIcon(m_fontAwesome->icon(fa::play));
     ui->actionPause->setIcon(m_fontAwesome->icon(fa::pause));
     ui->actionStop->setIcon(m_fontAwesome->icon(fa::stop));
 
-    ui->actionPlay->setEnabled(true);
+    ui->actionPlay->setEnabled(false);
     ui->actionPause->setEnabled(false);
     ui->actionStop->setEnabled(false);
 
+    QObject::connect(&m_setModel, SIGNAL(setChanged()), this, SLOT(onSetChanged()));
     QObject::connect(&m_setModel, SIGNAL(setChanged()), m_stagingArea, SLOT(onSetChanged()));
     QObject::connect(m_stagingArea, SIGNAL(sizeChanged()), this, SLOT(onStagingAreaResized()));
     QObject::connect(&m_setModel, SIGNAL(intervalStarted()), m_showtimeWidget, SLOT(onIntervalStarted()));
@@ -64,6 +81,9 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(&m_setModel, SIGNAL(setStopped()), this, SLOT(onSetStopped()));
     QObject::connect(&m_setModel, SIGNAL(playbackError(QString)), m_showtimeWidget, SLOT(onPlaybackError(QString)));
     QObject::connect(m_scrollArea->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(onSliderMoved(int)));
+    QObject::connect(m_showtimeWidget, SIGNAL(toggleFullscreen()), this, SLOT(onToggleFullscreen()));
+    QObject::connect(m_showtimeWidget, SIGNAL(closeFullScreen()), this, SLOT(onCloseFullscreen()));
+    QObject::connect(m_showtimeWidget, SIGNAL(playPauseToggle()), this, SLOT(onPlayPauseToggle()));
 
     // Restore position/state from previous session
     QSettings settings(AppRegKey);
@@ -156,6 +176,43 @@ void MainWindow::onShowAddMenu(const QPoint menuPos, Step *parent)
     }
 }
 
+void MainWindow::UpdateFullscreen()
+{
+    if (m_fullScreen)
+    {
+        if (!m_showtimeWindow)
+            m_showtimeWindow = new ShowTimeWindow(nullptr);
+
+        Q_ASSERT(m_showtimeWindow && m_showtimeWidget);
+
+        m_showtimeWidget->setParent(m_showtimeWindow);
+        setCentralWidget(nullptr);
+
+        m_showtimeWindow->setWidget(m_showtimeWidget);
+
+        hide();
+
+        m_showtimeWindow->showFullScreen();
+    }
+    else
+    {
+        if (m_showtimeWindow)
+        {
+            m_showtimeWindow->hide();
+        }
+
+        setCentralWidget(m_showtimeWidget);
+
+        show();
+    }
+}
+
+void MainWindow::onToggleFullscreen()
+{
+    m_fullScreen = !m_fullScreen;
+    UpdateFullscreen();
+}
+
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     Q_UNUSED(event);
@@ -193,12 +250,22 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
+void MainWindow::onSetChanged()
+{
+    ui->actionPlay->setEnabled(!m_setModel.isEmpty());
+}
+
 void MainWindow::onSetStarted()
 {
     ui->actionPlay->setEnabled(false);
     ui->actionPause->setEnabled(true);
     ui->actionStop->setEnabled(true);
     ui->actionAddStep->setEnabled(false);
+
+    // Prevent screen-saver/hybernation. There doesn't seem to be a Qt way to do this.
+#ifdef Q_OS_WIN
+    ::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_AWAYMODE_REQUIRED);
+#endif
 }
 
 void MainWindow::onSetPaused()
@@ -223,6 +290,15 @@ void MainWindow::onSetComplete()
     ui->actionPause->setEnabled(false);
     ui->actionStop->setEnabled(false);
     ui->actionAddStep->setEnabled(false);
+
+    if (m_fullScreen)
+        onToggleFullscreen();
+
+    QTimer::singleShot(5000, this, SLOT(onBackToStagingArea()));
+
+#ifdef Q_OS_WIN
+    ::SetThreadExecutionState(ES_CONTINUOUS);
+#endif
 }
 
 void MainWindow::onSetStopped()
@@ -232,11 +308,12 @@ void MainWindow::onSetStopped()
     ui->actionStop->setEnabled(false);
     ui->actionAddStep->setEnabled(true);
 
-    m_showtimeWidget->setParent(nullptr);
-    m_showtimeWidget->hide();
+    onBackToStagingArea();
 
-    setCentralWidget(m_scrollArea);
-    m_scrollArea->show();
+    // Reset thread priority (allow screen-saver, etc.)
+#ifdef Q_OS_WIN
+    ::SetThreadExecutionState(ES_CONTINUOUS);
+#endif
 }
 
 void MainWindow::on_actionPlay_triggered()
@@ -245,11 +322,11 @@ void MainWindow::on_actionPlay_triggered()
     {
         m_scrollArea->setParent(nullptr);
         m_scrollArea->hide();
-    //m_showtimeWidget->showFullScreen();
     }
 
     setCentralWidget(m_showtimeWidget);
     m_showtimeWidget->show();
+    m_showtimeWidget->setFocus();
 
     m_setModel.startSet();
 }
@@ -257,13 +334,17 @@ void MainWindow::on_actionPlay_triggered()
 void MainWindow::on_actionNew_triggered()
 {
     if (m_setModel.dirty()
-        || QMessageBox::question(this, "Discard Unsaved Data", "Any unsaved changes will be lost. Continue?") != QMessageBox::Yes)
+        && QMessageBox::question(this, "Discard Unsaved Data", "Any unsaved changes will be lost. Continue?") != QMessageBox::Yes)
         return;
     m_setModel.newSet();
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
+    if (m_setModel.dirty()
+        && QMessageBox::question(this, "Discard Unsaved Data", "Any unsaved changes will be lost. Continue?") != QMessageBox::Yes)
+        return;
+
     m_filePath = QFileDialog::getOpenFileName(this, "Open set", QString(), FileFilter);
     if (!m_filePath.isEmpty())
         m_setModel.deserialise(m_filePath);
@@ -304,4 +385,31 @@ void MainWindow::on_actionPause_triggered()
 void MainWindow::on_actionStop_triggered()
 {
     m_setModel.stopSet();
+}
+
+void MainWindow::onBackToStagingArea()
+{
+    if (!m_showtimeWidget || !m_scrollArea)
+    {
+        Q_ASSERT(false);
+        return;
+    }
+
+    m_showtimeWidget->setParent(nullptr);
+    m_showtimeWidget->hide();
+
+    setCentralWidget(m_scrollArea);
+    m_scrollArea->show();
+    onStagingAreaResized();
+}
+
+void MainWindow::onPlayPauseToggle()
+{
+    m_setModel.togglePlayPause();
+}
+
+void MainWindow::onCloseFullscreen()
+{
+    m_fullScreen = false;
+    UpdateFullscreen();
 }

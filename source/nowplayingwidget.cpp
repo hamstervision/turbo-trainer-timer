@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "nowplayingwidget.h"
 #include "stepresources.h"
 #include <QPainter>
@@ -51,7 +55,6 @@ void NowPlayingWidget::setInterval(Interval *nowPlaying)
     m_interval = nowPlaying;
     m_text->setText(nowPlaying->text());
     m_type->setText(TypeToString(nowPlaying->type()));
-    DrawFaIconToLabel(m_icon, TypeToFaIcon(nowPlaying->type()), m_fontAwesome);
 
     adjustLayout();
     repaint();
@@ -67,7 +70,7 @@ void NowPlayingWidget::setIterations(const bool loop, const uint32_t currentIter
 
     if (loop)
     {
-        QString text = QString("Loop %1 of %2").arg(QString::number(currentIteration), QString::number(totalIterations));
+        QString text = QString("Loop %1/%2").arg(QString::number(currentIteration), QString::number(totalIterations));
         m_iteration->setText(text);
         m_iteration->show();
     }
@@ -89,27 +92,6 @@ void NowPlayingWidget::setTimeRemaining(const uint secondsRemaining)
     m_time->repaint();
 }
 
-void NowPlayingWidget::paintEvent(QPaintEvent *event)
-{
-    Q_UNUSED(event);
-    QPainter painter(this);
-
-    painter.setPen(QColor(0x33, 0x33, 0x33));
-    painter.setBrush(Qt::NoBrush);
-
-    int headerHeight = headerSize();
-
-    QRect bgrRect(0, 0, width(), headerHeight);
-
-    painter.fillRect(bgrRect, TypeToBgColour(m_interval->type()));
-    painter.drawRect(bgrRect);
-
-    bgrRect.setRect(0, headerHeight, width(), height() - headerHeight);
-
-    painter.fillRect(bgrRect, m_bgrColour);
-    painter.drawRect(bgrRect);
-}
-
 void NowPlayingWidget::adjustLayout()
 {
     if (!m_topRow || !m_time || !m_text)
@@ -122,10 +104,15 @@ void NowPlayingWidget::adjustLayout()
 
     m_topRow->setGeometry(0, 0, width(), headerHeight);
 
+    // The following *should* be unneccessary but contents of the layout have not yet been updated at this point (async?)
+    m_topRowLayout->setGeometry(m_topRow->rect());
+
     m_time->setGeometry(Margin, headerHeight, width() - (Margin * 2), ((height() - headerHeight) * 2) / 3);
     m_text->setGeometry(Margin, m_time->geometry().bottom() + TimeMargin, width() - (Margin * 2), height() - m_time->geometry().bottom() - (TimeMargin * 2));
 
-    UpdateLabelFontSize(m_icon);
+    if (m_interval)
+        DrawFaIconToLabel(m_icon, TypeToFaIcon(m_interval->type()), m_fontAwesome);
+
     UpdateLabelFontSize(m_type);
     if (!m_iteration->isHidden())
         UpdateLabelFontSize(m_iteration);

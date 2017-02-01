@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "mainwindow.h"
 #include <QApplication>
 

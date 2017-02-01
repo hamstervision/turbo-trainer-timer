@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "stepresources.h"
 #include "QtAwesome/QtAwesome.h"
 #include <QLabel>
@@ -69,14 +73,17 @@ QColor TypeToBgColour(const StepType type)
     return QColor();
 }
 
-void UpdateLabelFontSize(QLabel *label)
+void UpdateLabelFontSize(QLabel *label, bool maxHeight /*= true*/)
 {
     if (!label)
         return;
 
     QFontMetrics metrics(label->font());
 
-    float factor = (float)label->height() / (float)metrics.height();
+    float factor = maxHeight
+            ? (float)label->height() / (float)metrics.height()
+            : (float)label->width() / (float)metrics.width(label->text());
+
     if ((factor < 1) || (factor > 1.25))
     {
         QFont scaledFont(label->font());

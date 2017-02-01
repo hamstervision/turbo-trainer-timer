@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #ifndef SHOWTIMESTEPWIDGET_H
 #define SHOWTIMESTEPWIDGET_H
 
@@ -9,14 +13,16 @@
 #include "step.h"
 #include "ifontawesome.h"
 
+/*! Base class for the interval widgets in the ShowTimeWidget */
 class ShowTimeStepWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit ShowTimeStepWidget(IFontAwesome *fontAwesome, QWidget *parent = nullptr);
 
-protected slots:
+protected: // Event handlers
     void resizeEvent(QResizeEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 protected:
     virtual void adjustLayout() = 0;

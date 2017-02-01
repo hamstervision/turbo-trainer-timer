@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #ifndef STEP_H
 #define STEP_H
 
@@ -9,6 +13,7 @@
 
 class Interval;
 
+/*! Base class representing a step in the set */
 class Step
 {
 public:
@@ -64,6 +69,7 @@ protected:
     unsigned int m_duration;
 };
 
+/*! An interval step - represents the one-at-a-time steps like a drill, effort, recovery, cool-down, etc. */
 class Interval : public Step
 {
 public:
@@ -129,7 +135,9 @@ protected:
     bool m_played;
 };
 
-
+/*! Loop Step - represents a loop in the set,
+ * will contain children Step objects,
+ * each of which will be iterated over according to m_iterations */
 class LoopStep : public Step
 {
 public:

@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "upnextwidget.h"
 #include "stepresources.h"
 #include <QPainter>
@@ -64,31 +68,6 @@ void UpNextWidget::setInterval(Interval *upNext)
     repaint();
 }
 
-void UpNextWidget::paintEvent(QPaintEvent *event)
-{
-    Q_UNUSED(event);
-
-    if (!m_interval)
-        return;
-
-    QPainter painter(this);
-
-    painter.setPen(QColor(0x33, 0x33, 0x33));
-    painter.setBrush(Qt::NoBrush);
-
-    int headerHeight = headerSize();
-
-    QRect bgrRect(0, 0, width(), headerHeight);
-
-    painter.fillRect(bgrRect, TypeToBgColour(m_interval->type()));
-    painter.drawRect(bgrRect);
-
-    bgrRect.setRect(0, headerHeight, width(), height() - headerHeight);
-
-    painter.fillRect(bgrRect, m_bgrColour);
-    painter.drawRect(bgrRect);
-}
-
 void UpNextWidget::adjustLayout()
 {
     if (!m_topRow || !m_text)
@@ -100,10 +79,17 @@ void UpNextWidget::adjustLayout()
     int headerHeight = headerSize();
 
     m_topRow->setGeometry(0, 0, width() , headerHeight);
+
+    // The following *should* be unneccessary but contents of the layout have not yet been updated at this point (async?)
+    m_topRowLayout->setGeometry(m_topRow->rect());
+
     m_text->setGeometry(Margin, headerHeight + (Margin * 2), width() - (Margin * 2), height() - headerHeight - (Margin * 2));
 
     UpdateLabelFontSize(m_upNext);
-    UpdateLabelFontSize(m_icon);
+
+    if (m_interval)
+        DrawFaIconToLabel(m_icon, TypeToFaIcon(m_interval->type()), m_fontAwesome);
+
     UpdateLabelFontSize(m_type);
     UpdateLabelFontSize(m_time);
     UpdateLabelFontSize(m_text);

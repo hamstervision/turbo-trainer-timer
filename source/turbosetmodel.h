@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #ifndef TURBOSETMODEL_H
 #define TURBOSETMODEL_H
 
@@ -11,12 +15,12 @@
 
 class QTimer;
 
+/*! Model object that manages the current set */
 class TurboSetModel : public QAbstractListModel, public IStepManager, public ISetManager
 {
     Q_OBJECT
 
 public:
-
     enum class PlaybackState
     {
         Ready,
@@ -47,10 +51,12 @@ public:
     bool newSet();
 
     bool dirty() const;
+    bool isEmpty() const;
 
     void startSet();
     void pauseSet();
     void stopSet();
+    void togglePlayPause();
 
 public: // IStepManager
     virtual void notifyChange(bool redrawNeeded = false) override;

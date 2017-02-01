@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #ifndef NOWPLAYINGWIDGET_H
 #define NOWPLAYINGWIDGET_H
 
@@ -10,6 +14,7 @@
 #include "step.h"
 #include "showtimestepwidget.h"
 
+/*! Widget representing the current interval in progress */
 class NowPlayingWidget : public ShowTimeStepWidget
 {
     Q_OBJECT
@@ -20,10 +25,7 @@ public:
     void setIterations(const bool loop, const uint32_t currentIteration, const uint32_t totalIterations);
     void setTimeRemaining(const uint secondsRemaining);
 
-protected slots:
-    void paintEvent(QPaintEvent *event) override;
-
-protected:
+protected: // ShowTimeStepWidget
     void adjustLayout() override;
     int headerSize() override;
 

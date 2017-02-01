@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #ifndef STEPCONTROL_H
 #define STEPCONTROL_H
 
@@ -16,6 +20,7 @@
 
 class Step;
 
+/*! Base Widget representing a Step object when setting up the turbo set */
 class StepWidget : public QWidget
 {
     Q_OBJECT
@@ -44,7 +49,9 @@ protected:
     void initAlignment();
     void initButtons();
 
-protected slots:
+    int idealTypeLabelWidth();
+
+protected: // Event handlers
     void contextMenuEvent(QContextMenuEvent *event) override;
 
 protected:
@@ -65,6 +72,7 @@ protected:
 
 };
 
+/*! Represents an Interval object when setting up the turbo set */
 class IntervalWidget : public StepWidget
 {
     Q_OBJECT
@@ -77,7 +85,7 @@ protected slots:
     void onTimeChanged(const QTime &time);
     void onTextChanged();
 
-protected:
+protected: // Event handlers
     void paintEvent(QPaintEvent *event) override;
 
 protected:
@@ -91,6 +99,7 @@ protected:
     QTextEdit   *m_textEdit;
 };
 
+/*! Represents a Loop object when setting up the turbo set, and is responsible for the layout of that Loop's child objects. */
 class LoopStepWidget : public StepWidget
 {
     Q_OBJECT
@@ -111,12 +120,12 @@ protected slots:
     void onAddChildPressed();
     void onIterationsChanged(int iterations);
 
-protected:
+protected: // Event handlers
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 protected:
-    void AdjustLayout();
+    void adjustLayout();
 
 protected:
     QWidget     *m_topRow;

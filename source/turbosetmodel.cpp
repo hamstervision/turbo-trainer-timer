@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "turbosetmodel.h"
 #include <QFile>
 #include <QDomDocument>
@@ -165,6 +169,11 @@ bool TurboSetModel::dirty() const
     return m_dirty;
 }
 
+bool TurboSetModel::isEmpty() const
+{
+    return m_steps.empty();
+}
+
 void TurboSetModel::startSet()
 {
     if (m_steps.empty())
@@ -214,6 +223,14 @@ void TurboSetModel::stopSet()
 
     m_timer->stop();
     resetPlaybackStates();
+}
+
+void TurboSetModel::togglePlayPause()
+{
+    if (m_playbackState == PlaybackState::Playing)
+        pauseSet();
+    else
+        startSet();
 }
 
 void TurboSetModel::notifyChange(bool redrawNeeded /*= false*/)

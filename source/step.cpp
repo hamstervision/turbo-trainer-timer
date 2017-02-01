@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "step.h"
 #include "turbosetmodel.h"
 
@@ -265,7 +269,7 @@ bool LoopStep::moveStepUp(Step *step)
     m_children[prev] = temp;
 
     if (m_manager)
-        m_manager->notifyChange();
+        m_manager->notifyChange(true);
 
     return true;
 }
@@ -289,7 +293,7 @@ bool LoopStep::moveStepDown(Step *step)
     std::iter_swap(it, itNext);
 
     if (m_manager)
-        m_manager->notifyChange();
+        m_manager->notifyChange(true);
 
     return true;
 }
