@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "stagingarea.h"
 #include "stepwidget.h"
 
@@ -12,7 +16,7 @@ StagingArea::StagingArea(TurboSetModel *model, IFontAwesome *fontAwesome, QWidge
     Q_ASSERT(model && fontAwesome);
 }
 
-void StagingArea::ClearView()
+void StagingArea::clearView()
 {
     for (auto step :  m_steps)
     {
@@ -28,15 +32,15 @@ int StagingArea::idealHeight() const
 
 void StagingArea::onSetChanged()
 {
-    ClearView();
+    clearView();
 
     auto intervals = m_model->getIntervals();
     for (auto step : intervals)
     {
-        AddStep(step, this);
+        addStep(step, this);
     }
 
-    AdjustLayout();
+    adjustLayout();
 
     emit sizeChanged();
 }
@@ -54,7 +58,7 @@ bool StagingArea::event(QEvent *event)
 void StagingArea::resizeEvent(QResizeEvent *event)
 {
     m_idealWidth = event->size().width();
-    AdjustLayout();
+    adjustLayout();
 }
 
 void StagingArea::paintEvent(QPaintEvent *event)
@@ -64,7 +68,7 @@ void StagingArea::paintEvent(QPaintEvent *event)
     painter.fillRect(QRectF(QPointF(0.0f, 0.0f), size()), QColor(0x80, 0x80, 0x80));
 }
 
-void StagingArea::AdjustLayout()
+void StagingArea::adjustLayout()
 {
     static const int Spacing = 10;
     int y = Spacing;
@@ -80,7 +84,7 @@ void StagingArea::AdjustLayout()
     m_idealHeight = y;
 }
 
-void StagingArea::AddStep(Step *step, QWidget *parent)
+void StagingArea::addStep(Step *step, QWidget *parent)
 {
     StepWidget *newStep = nullptr;
     if (step->type() == StepType::Loop)
@@ -90,7 +94,7 @@ void StagingArea::AddStep(Step *step, QWidget *parent)
         for (size_t i = 0; i < children; i++)
         {
             Step *child = step->getChild(i);
-            AddStep(child, newStep);
+            addStep(child, newStep);
         }
     }
     else
@@ -109,8 +113,8 @@ void StagingArea::AddStep(Step *step, QWidget *parent)
     {
         loopParent->addChild(newStep);
         QObject::connect(newStep, SIGNAL(deleted(Step*)), loopParent, SLOT(onStepDeleted(Step*)), Qt::DirectConnection);
-        QObject::connect(newStep, SIGNAL(movedUp(Step*)), loopParent, SLOT(onMoveUp(bool)), Qt::DirectConnection);
-        QObject::connect(newStep, SIGNAL(movedDown(Step*)), loopParent, SLOT(onMoveDown(bool)), Qt::DirectConnection);
+        QObject::connect(newStep, SIGNAL(movedUp(Step*)), loopParent, SLOT(onStepMovedUp(Step*)), Qt::DirectConnection);
+        QObject::connect(newStep, SIGNAL(movedDown(Step*)), loopParent, SLOT(onStepMovedDown(Step*)), Qt::DirectConnection);
         QObject::connect(newStep, SIGNAL(typeChanged(Step*,StepType)), loopParent, SLOT(onTypeChanged(Step*,StepType)), Qt::DirectConnection);
 
     }

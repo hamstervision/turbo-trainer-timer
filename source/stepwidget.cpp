@@ -1,3 +1,7 @@
+/*************************************
+ * Copyright (C) 2017 Michael Pearce *
+ *************************************/
+
 #include "stepwidget.h"
 #include <QPainter>
 #include <QMessageBox>
@@ -83,9 +87,23 @@ void StepWidget::initButtons()
 
     m_buttonsArea->setLayout(layout);
 
-    QObject::connect(m_delete, SIGNAL(clicked(bool)), this, SLOT(onDelete(bool)));
-    QObject::connect(m_moveUp, SIGNAL(clicked(bool)), this, SLOT(onMoveUp(bool)));
-    QObject::connect(m_moveDown, SIGNAL(clicked(bool)), this, SLOT(onMoveDown(bool)));
+    QObject::connect(m_delete, SIGNAL(clicked(bool)), this, SLOT(onDelete(bool)), Qt::QueuedConnection);
+    QObject::connect(m_moveUp, SIGNAL(clicked(bool)), this, SLOT(onMoveUp(bool)), Qt::QueuedConnection);
+    QObject::connect(m_moveDown, SIGNAL(clicked(bool)), this, SLOT(onMoveDown(bool)), Qt::QueuedConnection);
+}
+
+int StepWidget::idealTypeLabelWidth()
+{
+    QFontMetrics metrics(m_labelFont);
+    int maxWidth = 0;
+
+    for (int i = (int)StepType::WarmUp; i <= (int)StepType::Loop; i++)
+    {
+        int width = metrics.width(TypeToString((StepType)i));
+        maxWidth = std::max(width, maxWidth);
+    }
+
+    return maxWidth;
 }
 
 void StepWidget::contextMenuEvent(QContextMenuEvent *event)
@@ -139,6 +157,7 @@ IntervalWidget::IntervalWidget(Step *step, IFontAwesome *fontAwesome, QWidget *p
 
     m_title->setFont(m_labelFont);
     m_title->setText(TypeToString(m_step->type()));
+    m_title->setFixedWidth(idealTypeLabelWidth());
 
     initAlignment();
 
@@ -255,6 +274,7 @@ LoopStepWidget::LoopStepWidget(Step *step, IFontAwesome *fontAwesome, QWidget *p
     layout->addWidget(m_icon);
 
     m_title->setFont(m_labelFont);
+    m_title->setFixedWidth(idealTypeLabelWidth());
 
     m_titleArea->setLayout(layout);
     m_topRowLayout->addWidget(m_titleArea);
@@ -308,7 +328,7 @@ LoopStepWidget::LoopStepWidget(Step *step, IFontAwesome *fontAwesome, QWidget *p
 
     setLayout(nullptr);
 
-    AdjustLayout();
+    adjustLayout();
 
     QObject::connect(m_addChildButton, SIGNAL(pressed()), this, SLOT(onAddChildPressed()));
     QObject::connect(m_spinBox, SIGNAL(valueChanged(int)), this, SLOT(onIterationsChanged(int)));
@@ -327,7 +347,7 @@ int LoopStepWidget::idealHeight() const
 void LoopStepWidget::addChild(StepWidget *child)
 {
     m_children.push_back(child);
-    AdjustLayout();
+    adjustLayout();
 }
 
 void LoopStepWidget::onStepDeleted(Step *step)
@@ -400,10 +420,10 @@ void LoopStepWidget::paintEvent(QPaintEvent *event)
 void LoopStepWidget::resizeEvent(QResizeEvent *event)
 {
     Q_UNUSED(event);
-    AdjustLayout();
+    adjustLayout();
 }
 
-void LoopStepWidget::AdjustLayout()
+void LoopStepWidget::adjustLayout()
 {
     static const int Spacing = 10;
     static const int MarginLeft = 20;

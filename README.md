@@ -8,15 +8,6 @@ Turbo Trainer Timer is a desktop application for setting up and running sets for
 
 It uses the [Qt framework](https://www.qt.io/) and the [QtAwesome library](https://github.com/gamecreature/QtAwesome/) for using [Font Awesome](http://fortawesome.github.io/Font-Awesome/) icons.
 
-License
--------
-
-MIT License. Copyright 2013 - Reliable Bits Software by Blommers IT. [http://blommersit.nl/](http://blommersit.nl)
-
-The Font Awesome font is licensed under the SIL Open Font License - [http://scripts.sil.org/OFL](http://scripts.sil.org/OFL)
-The Font Awesome pictograms are licensed under the CC BY 3.0 License - [http://creativecommons.org/licenses/by/3.0/](http://creativecommons.org/licenses/by/3.0/)
-"Font Awesome by Dave Gandy - http://fortawesome.github.com/Font-Awesome"
-
 Contact
 -------
 
